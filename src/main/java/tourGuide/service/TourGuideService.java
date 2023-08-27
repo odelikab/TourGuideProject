@@ -10,11 +10,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -40,7 +36,6 @@ public class TourGuideService {
 	private final RewardsService rewardsService;
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
-	ExecutorService exec = Executors.newFixedThreadPool(100);
 
 	boolean testMode = true;
 
@@ -54,7 +49,7 @@ public class TourGuideService {
 			initializeInternalUsers();
 			logger.debug("Finished initializing users");
 		}
-		tracker = new Tracker(this);
+		tracker = new Tracker(this, rewardsService);
 		addShutDownHook();
 	}
 
@@ -91,29 +86,21 @@ public class TourGuideService {
 		return providers;
 	}
 
-	public VisitedLocation trackUserLocation(User user) throws InterruptedException, ExecutionException {
-//		Executor executorService = null;
-		Executor exec = Executors.newFixedThreadPool(100);
+	public VisitedLocation trackUserLocation(User user) {
 //		CompletableFuture<VisitedLocation> test = new CompletableFuture<VisitedLocation>();
-		CompletableFuture<VisitedLocation> test = CompletableFuture.supplyAsync(() -> {
-			System.out.println("Thread execution - " + user.getUserName() + " " + Thread.currentThread().getName());
+//		CompletableFuture<VisitedLocation> test = CompletableFuture.supplyAsync(() -> {
+//		System.out.println("Thread execution - " + user.getUserName() + " " + Thread.currentThread().getName());
 
-			return gpsUtil.getUserLocation(user.getUserId());
-
-		}, exec);
+		VisitedLocation v = gpsUtil.getUserLocation(user.getUserId());
+		user.addToVisitedLocations(v);
+//		});
 //				.thenApplyAsync((v) -> user.addToVisitedLocations(v));
 //		CompletableFuture<Void> test2 = CompletableFuture.runAsync(() ->
 //
 //		{
-//			try {
-//		rewardsService.calculateRewards(user);
-//			} catch (InterruptedException | ExecutionException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+		rewardsService.calculateRewards(user);
 //		});
-//		test.toCompletableFuture();
-		return test.get();
+		return v;
 	}
 
 	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {

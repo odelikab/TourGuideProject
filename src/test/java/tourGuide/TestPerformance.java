@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -53,14 +52,14 @@ public class TestPerformance {
 	 * TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
 	 */
 
-//	@Ignore
+	@Ignore
 	@Test
-	public void highVolumeTrackLocation() throws InterruptedException, ExecutionException {
+	public void highVolumeTrackLocation() throws InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
 		// minutes
-		InternalTestHelper.setInternalUserNumber(100);
+		InternalTestHelper.setInternalUserNumber(100000);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
 		List<User> allUsers = new ArrayList<>();
@@ -68,38 +67,35 @@ public class TestPerformance {
 
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
-//		for (User user : allUsers) {
-//			tourGuideService.trackUserLocation(user);
-//		}
 
-//		allUsers.forEach(user -> {
-//			try {
-//				tourGuideService.trackUserLocation(user);
-//			} catch (InterruptedException | ExecutionException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//
-//		});
-
-		System.out.println(allUsers.get(0).getVisitedLocations());
-		stopWatch.stop();
+		// Waiting for all users to receive their location
+		while (allUsers.stream().filter(u -> u.getVisitedLocations().size() < 4).count() > 0) {
+			TimeUnit.SECONDS.sleep(5);
+		}
 		tourGuideService.tracker.stopTracking();
+
+		allUsers.forEach(u -> {
+			assertTrue(u.getVisitedLocations().size() >= 4);
+		});
+
+		System.out.println(allUsers.get(10).getVisitedLocations());
+		stopWatch.stop();
 
 		System.out.println("highVolumeTrackLocation: Time Elapsed: "
 				+ TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
+
 		assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
 	}
 
 	@Ignore
 	@Test
-	public void highVolumeGetRewards() {
+	public void highVolumeGetRewards() throws InterruptedException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
 		// Users should be incremented up to 100,000, and test finishes within 20
 		// minutes
-		InternalTestHelper.setInternalUserNumber(1000);
+		InternalTestHelper.setInternalUserNumber(10000);
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
@@ -109,27 +105,25 @@ public class TestPerformance {
 		allUsers = tourGuideService.getAllUsers();
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
-		allUsers.forEach(u -> {
-			try {
-				rewardsService.calculateRewards(u);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
+		// allUsers.forEach(u -> {
+//			rewardsService.calculateRewards(u);
+//		});
 
+		// Waiting for all users to calculate their rewards
+		while (allUsers.stream().filter(u -> u.getUserRewards().size() == 0).count() > 0) {
+			TimeUnit.SECONDS.sleep(2);
+		}
 		for (User user : allUsers) {
 			assertTrue(user.getUserRewards().size() > 0);
 		}
 		stopWatch.stop();
 		tourGuideService.tracker.stopTracking();
+//		allUsers.forEach(u -> {
+//			System.out.println(u.getUserRewards().get(0).getRewardPoints() + " " + u.getUserName());
+//		});
 
 		System.out.println("highVolumeGetRewards: Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime())
 				+ " seconds.");
 		assertTrue(TimeUnit.MINUTES.toSeconds(20) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
 	}
-
 }

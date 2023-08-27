@@ -2,10 +2,10 @@ package tourGuide.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import gpsUtil.GpsUtil;
@@ -14,10 +14,13 @@ import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
 import rewardCentral.RewardCentral;
 import tourGuide.user.User;
+import tourGuide.user.UserReward;
 
 @Service
 public class RewardsService {
 	private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
+
+	private Logger logger = LoggerFactory.getLogger(RewardsService.class);
 
 	// proximity in miles
 	private int defaultProximityBuffer = 10;
@@ -39,69 +42,25 @@ public class RewardsService {
 		proximityBuffer = defaultProximityBuffer;
 	}
 
-	public CompletableFuture<List<Attraction>> calculateRewards(User user)
-			throws InterruptedException, ExecutionException {
+	public void calculateRewards(User user) {
+
 		CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<VisitedLocation>();
 		userLocations = user.getVisitedLocations();
 		List<Attraction> attractions = new ArrayList<Attraction>();
-		CompletableFuture<List<Attraction>> test = CompletableFuture.supplyAsync(() -> gpsUtil.getAttractions());
-
-//		for (VisitedLocation visitedLocation : userLocations) {
-//			for (Attraction attraction : attractions) {
-//				if (user.getUserRewards().stream()
-//						.filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
-//					if (nearAttraction(visitedLocation, attraction)) {
-//						user.addUserReward(
-//								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user).get()));
-//					}
-//				}
-//			}
-//		}
-//		return test.get();
-		return test;
+		attractions = gpsUtil.getAttractions();
+		for (VisitedLocation visitedLocation : userLocations) {
+			for (Attraction attraction : attractions) {
+				if (user.getUserRewards().stream()
+						.filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
+					if (nearAttraction(visitedLocation, attraction)) {
+						logger.debug("near attraction");
+						user.addUserReward(
+								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
+					}
+				}
+			}
+		}
 	}
-
-//	public void calculateRewards(User user) {
-//        List<VisitedLocation> userLocations = user.getVisitedLocations();
-//        List<Attraction> allAttractions = gpsUtil.getAttractions();
-//        List<UserReward> userRewards = user.getUserRewards();
-//
-//        // Get the attractions that the user has not visited yet
-//        List<Attraction> attractionsToVisit = new CopyOnWriteArrayList<>();
-//        for (Attraction attraction : allAttractions) {
-//            if (userRewards.stream().noneMatch(r -> r.attraction.attractionName.equals(attraction.attractionName))) {
-//                attractionsToVisit.add(attraction);
-//            }
-//        }
-//
-//        List<CompletableFuture<UserReward>> futures = new ArrayList<>();
-//
-//        // Calculate the rewards for each location and attraction in a separate thread
-//        for (VisitedLocation visitedLocation : userLocations) {
-//            for  (Attraction attraction : attractionsToVisit) {
-//                CompletableFuture<UserReward> future = CompletableFuture.supplyAsync(() -> {
-//                    if (nearAttraction(visitedLocation, attraction)) {
-//
-//                        return new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user));
-//                    }
-//                    return null;
-//                }, executorService);
-//                futures.add(future);
-//            }
-//        }
-//
-//        // Collect the rewards calculated by each future
-//        List<UserReward> newRewards = futures.stream()
-//                .map(CompletableFuture::join)
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.toList());
-//
-//        userRewards.addAll(newRewards);
-//
-//
-//     //Sort the rewards by their reward points in descending order
-//    userRewards.sort((r1, r2) -> Integer.compare(r2.getRewardPoints(), r1.getRewardPoints()));
-//}
 
 	public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
 		return getDistance(attraction, location) > attractionProximityRange ? false : true;
@@ -111,11 +70,9 @@ public class RewardsService {
 		return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
 	}
 
-	private CompletableFuture<Integer> getRewardPoints(Attraction attraction, User user) {
+	private Integer getRewardPoints(Attraction attraction, User user) {
 
-		CompletableFuture<Integer> rp = CompletableFuture
-				.supplyAsync(() -> rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId()));
-		return rp;
+		return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
 	}
 
 	public double getDistance(Location loc1, Location loc2) {
