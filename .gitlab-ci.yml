@@ -18,6 +18,10 @@
 
 image: gradle:alpine
 
+stages:
+  - build
+  - test
+  
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME

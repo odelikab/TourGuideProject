@@ -71,7 +71,6 @@ public class Tracker extends Thread {
 
 			}
 
-//			if (users.stream().filter(u -> u.getUserRewards().size() == 0).count() == 0) {
 			stopWatch.stop();
 			logger.debug("Tracker Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
 			stopWatch.reset();

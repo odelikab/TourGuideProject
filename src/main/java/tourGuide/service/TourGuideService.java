@@ -111,12 +111,6 @@ public class TourGuideService {
 		});
 //		Collections.sort(distanceToAttraction);
 		List<Attraction> nearbyAttractions = new ArrayList<>(5);
-//		rewardsService.setAttractionProximityRange((int) Math.floor(distanceToAttraction.get(5)));
-//		for (Attraction attraction : gpsUtil.getAttractions()) {
-//			if (rewardsService.isWithinAttractionProximity(attraction, visitedLocation.location)) {
-//				nearbyAttractions.add(attraction);
-//			}
-//		}
 		nearbyAttractions = distanceToAttraction.values().stream().limit(5).collect(Collectors.toList());
 		return nearbyAttractions;
 	}
