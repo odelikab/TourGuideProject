@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -57,7 +56,7 @@ public class TourGuideService {
 		return user.getUserRewards();
 	}
 
-	public VisitedLocation getUserLocation(User user) throws InterruptedException, ExecutionException {
+	public VisitedLocation getUserLocation(User user) {
 		VisitedLocation visitedLocation = (user.getVisitedLocations().size() > 0) ? user.getLastVisitedLocation()
 				: trackUserLocation(user);
 		return visitedLocation;
@@ -87,19 +86,10 @@ public class TourGuideService {
 	}
 
 	public VisitedLocation trackUserLocation(User user) {
-//		CompletableFuture<VisitedLocation> test = new CompletableFuture<VisitedLocation>();
-//		CompletableFuture<VisitedLocation> test = CompletableFuture.supplyAsync(() -> {
-//		System.out.println("Thread execution - " + user.getUserName() + " " + Thread.currentThread().getName());
 
 		VisitedLocation v = gpsUtil.getUserLocation(user.getUserId());
 		user.addToVisitedLocations(v);
-//		});
-//				.thenApplyAsync((v) -> user.addToVisitedLocations(v));
-//		CompletableFuture<Void> test2 = CompletableFuture.runAsync(() ->
-//
-//		{
 		rewardsService.calculateRewards(user);
-//		});
 		return v;
 	}
 
@@ -109,7 +99,7 @@ public class TourGuideService {
 			double distance = rewardsService.getDistance(a, visitedLocation.location);
 			distanceToAttraction.put(distance, a);
 		});
-//		Collections.sort(distanceToAttraction);
+
 		List<Attraction> nearbyAttractions = new ArrayList<>(5);
 		nearbyAttractions = distanceToAttraction.values().stream().limit(5).collect(Collectors.toList());
 		return nearbyAttractions;

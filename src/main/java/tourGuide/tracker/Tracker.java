@@ -55,12 +55,6 @@ public class Tracker extends Thread {
 			List<tourGuide.user.User> users = tourGuideService.getAllUsers();
 			logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
 			stopWatch.start();
-			users.forEach(u -> {
-//				System.out.println("Thread execution - " + u.getUserName() + " " + Thread.currentThread().getName());
-//				VisitedLocation v = gpsUtil.getUserLocation(u.getUserId());
-//				tourGuideService.trackUserLocation(u);
-//				VisitedLocation v = gpsUtil.getUserLocation(u.getUserId());
-			});
 
 			for (User user : users) {
 
@@ -68,7 +62,6 @@ public class Tracker extends Thread {
 					return gpsUtil.getUserLocation(user.getUserId());
 				}, executor).thenApplyAsync(v -> user.addToVisitedLocations(v), executor)
 						.thenAcceptAsync(v -> rewardsService.calculateRewards(user), executor);
-
 			}
 
 			stopWatch.stop();
@@ -80,7 +73,6 @@ public class Tracker extends Thread {
 			} catch (InterruptedException e) {
 				break;
 			}
-
 		}
 	}
 }
