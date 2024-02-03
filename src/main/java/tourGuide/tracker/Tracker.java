@@ -52,13 +52,13 @@ public class Tracker extends Thread {
 				break;
 			}
 
-			List<tourGuide.user.User> users = tourGuideService.getAllUsers();
+			List<User> users = tourGuideService.getAllUsers();
 			logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
 			stopWatch.start();
 
 			for (User user : users) {
 
-				CompletableFuture<Void> cpl = CompletableFuture.supplyAsync(() -> {
+				CompletableFuture.supplyAsync(() -> {
 					return gpsUtil.getUserLocation(user.getUserId());
 				}, executor).thenApplyAsync(v -> user.addToVisitedLocations(v), executor)
 						.thenAcceptAsync(v -> rewardsService.calculateRewards(user), executor);
