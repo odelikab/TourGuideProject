@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -53,12 +54,12 @@ public class TestPerformance {
 
 //	@Ignore
 	@Test
-	public void highVolumeTrackLocation() throws InterruptedException {
+	public void highVolumeTrackLocation() throws InterruptedException, ExecutionException {
 		GpsUtil gpsUtil = new GpsUtil();
 		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
 		// minutes
-		InternalTestHelper.setInternalUserNumber(100000);
+		InternalTestHelper.setInternalUserNumber(10000);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
 
 		List<User> allUsers = new ArrayList<>();
@@ -67,13 +68,17 @@ public class TestPerformance {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 
+		for (User user : allUsers) {
+			tourGuideService.trackUserLocation(user);
+		}
+
 		// Waiting for all users to receive their location
 		while (allUsers.stream().filter(u -> u.getVisitedLocations().size() < 4).count() > 0) {
 			TimeUnit.SECONDS.sleep(1);
 		}
-		tourGuideService.tracker.stopTracking();
 
 		stopWatch.stop();
+		tourGuideService.tracker.stopTracking();
 
 		System.out.println("highVolumeTrackLocation: Time Elapsed: "
 				+ TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
@@ -89,7 +94,7 @@ public class TestPerformance {
 
 		// Users should be incremented up to 100,000, and test finishes within 20
 		// minutes
-		InternalTestHelper.setInternalUserNumber(10000);
+		InternalTestHelper.setInternalUserNumber(100);
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
@@ -100,7 +105,7 @@ public class TestPerformance {
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
 		// Rewards are calculated through the tracker
-		// allUsers.forEach(u -> rewardsService.calculateRewards(u));
+		allUsers.forEach(u -> rewardsService.calculateRewards(u));
 
 		// Waiting for all users to calculate their rewards
 		while (allUsers.stream().filter(u -> u.getUserRewards().size() == 0).count() > 0) {

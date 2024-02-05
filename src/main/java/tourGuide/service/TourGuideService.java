@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -35,6 +39,7 @@ public class TourGuideService {
 	private final RewardsService rewardsService;
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
+	private final ExecutorService executor = Executors.newFixedThreadPool(100);
 
 	boolean testMode = true;
 
@@ -56,9 +61,9 @@ public class TourGuideService {
 		return user.getUserRewards();
 	}
 
-	public VisitedLocation getUserLocation(User user) {
+	public VisitedLocation getUserLocation(User user) throws InterruptedException, ExecutionException {
 		VisitedLocation visitedLocation = (user.getVisitedLocations().size() > 0) ? user.getLastVisitedLocation()
-				: trackUserLocation(user);
+				: trackUserLocation(user).get();
 		return visitedLocation;
 	}
 
@@ -85,12 +90,19 @@ public class TourGuideService {
 		return providers;
 	}
 
-	public VisitedLocation trackUserLocation(User user) {
+	public CompletableFuture<VisitedLocation> trackUserLocation(User user)
+			throws InterruptedException, ExecutionException {
+		CompletableFuture<VisitedLocation> future = CompletableFuture.supplyAsync(() -> {
+			VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
+			user.addToVisitedLocations(visitedLocation);
+			rewardsService.calculateRewards(user);
+			return visitedLocation;
+		}, executor);
 
-		VisitedLocation v = gpsUtil.getUserLocation(user.getUserId());
-		user.addToVisitedLocations(v);
-		rewardsService.calculateRewards(user);
-		return v;
+//		VisitedLocation v = gpsUtil.getUserLocation(user.getUserId());
+//		user.addToVisitedLocations(v);
+//		rewardsService.calculateRewards(user);
+		return future;
 	}
 
 	public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {

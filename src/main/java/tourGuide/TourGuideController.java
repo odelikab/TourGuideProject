@@ -2,6 +2,7 @@ package tourGuide;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,7 @@ public class TourGuideController {
 	}
 
 	@GetMapping("/getLocation")
-	public Location getLocation(@RequestParam String userName) {
+	public Location getLocation(@RequestParam String userName) throws InterruptedException, ExecutionException {
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
 		return visitedLocation.location;
 	}
@@ -46,7 +47,8 @@ public class TourGuideController {
 	// The reward points for visiting each Attraction.
 	// Note: Attraction reward points can be gathered from RewardsCentral
 	@RequestMapping("/getNearbyAttractions")
-	public List<Attraction> getNearbyAttractions(@RequestParam String userName) {
+	public List<Attraction> getNearbyAttractions(@RequestParam String userName)
+			throws InterruptedException, ExecutionException {
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
 		return tourGuideService.getNearByAttractions(visitedLocation);
 	}
