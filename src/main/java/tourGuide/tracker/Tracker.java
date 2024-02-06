@@ -1,6 +1,7 @@
 package tourGuide.tracker;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +21,6 @@ public class Tracker extends Thread {
 	private final GpsUtil gpsUtil;
 
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-	private final ExecutorService executor = Executors.newFixedThreadPool(1000);
 
 	private final TourGuideService tourGuideService;
 	private final RewardsService rewardsService;
@@ -55,13 +55,14 @@ public class Tracker extends Thread {
 			logger.debug("Begin Tracker. Tracking " + users.size() + " users.");
 			stopWatch.start();
 
-//			for (User user : users) {
-//
-//				CompletableFuture.supplyAsync(() -> {
-//					return gpsUtil.getUserLocation(user.getUserId());
-//				}, executor).thenApplyAsync(v -> user.addToVisitedLocations(v), executor)
-//						.thenAcceptAsync(v -> rewardsService.calculateRewards(user), executor);
-//			}
+			users.forEach(u -> {
+				try {
+					tourGuideService.trackUserLocation(u);
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			});
 
 			stopWatch.stop();
 			logger.debug("Tracker Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");

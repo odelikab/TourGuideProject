@@ -99,9 +99,6 @@ public class TourGuideService {
 			return visitedLocation;
 		}, executor);
 
-//		VisitedLocation v = gpsUtil.getUserLocation(user.getUserId());
-//		user.addToVisitedLocations(v);
-//		rewardsService.calculateRewards(user);
 		return future;
 	}
 
