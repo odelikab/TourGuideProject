@@ -10,26 +10,23 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gpsUtil.GpsUtil;
-import tourGuide.service.RewardsService;
 import tourGuide.service.TourGuideService;
 import tourGuide.user.User;
 
 public class Tracker extends Thread {
 	private Logger logger = LoggerFactory.getLogger(Tracker.class);
 	private static final long trackingPollingInterval = TimeUnit.MINUTES.toSeconds(5);
-	private final GpsUtil gpsUtil;
+//	private final GpsUtil gpsUtil;
 
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	private final TourGuideService tourGuideService;
-	private final RewardsService rewardsService;
+//	private final RewardsService rewardsService;
 	private boolean stop = false;
 
-	public Tracker(TourGuideService tourGuideService, RewardsService rewardsService) {
-		this.gpsUtil = new GpsUtil();
+	public Tracker(TourGuideService tourGuideService) {
+//		this.gpsUtil = new GpsUtil();
 		this.tourGuideService = tourGuideService;
-		this.rewardsService = rewardsService;
 
 		executorService.submit(this);
 	}
@@ -59,7 +56,6 @@ public class Tracker extends Thread {
 				try {
 					tourGuideService.trackUserLocation(u);
 				} catch (InterruptedException | ExecutionException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			});

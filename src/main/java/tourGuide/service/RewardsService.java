@@ -46,8 +46,8 @@ public class RewardsService {
 		proximityBuffer = defaultProximityBuffer;
 	}
 
-	public void calculateRewards(User user) {
-		CompletableFuture.runAsync(() -> {
+	public CompletableFuture<Void> calculateRewards(User user) {
+		return CompletableFuture.runAsync(() -> {
 			CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<VisitedLocation>();
 			userLocations = user.getVisitedLocations();
 			List<Attraction> attractions = new ArrayList<Attraction>();

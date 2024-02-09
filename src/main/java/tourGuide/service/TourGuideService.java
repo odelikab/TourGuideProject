@@ -39,7 +39,7 @@ public class TourGuideService {
 	private final RewardsService rewardsService;
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
-	private final ExecutorService executor = Executors.newFixedThreadPool(100);
+	private final ExecutorService executor = Executors.newFixedThreadPool(1000);
 
 	boolean testMode = true;
 
@@ -53,7 +53,7 @@ public class TourGuideService {
 			initializeInternalUsers();
 			logger.debug("Finished initializing users");
 		}
-		tracker = new Tracker(this, rewardsService);
+		tracker = new Tracker(this);
 		addShutDownHook();
 	}
 
@@ -92,13 +92,23 @@ public class TourGuideService {
 
 	public CompletableFuture<VisitedLocation> trackUserLocation(User user)
 			throws InterruptedException, ExecutionException {
+//		CompletableFuture<VisitedLocation> cpl = 
+//				CompletableFuture.supplyAsync(() -> gpsUtil.getUserLocation(user.getUserId()), executor);
+//		cpl.thenAcceptAsync(v -> user.addToVisitedLocations(v), executor);
+//		.thenAcceptAsync(v -> user.addToVisitedLocations(v), executor);
+//		rewardsService.calculateRewards(user);
+//		return cpl;
+
 		CompletableFuture<VisitedLocation> future = CompletableFuture.supplyAsync(() -> {
 			VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
 			user.addToVisitedLocations(visitedLocation);
-			rewardsService.calculateRewards(user);
+			try {
+				rewardsService.calculateRewards(user).get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
 			return visitedLocation;
 		}, executor);
-
 		return future;
 	}
 
