@@ -92,12 +92,6 @@ public class TourGuideService {
 
 	public CompletableFuture<VisitedLocation> trackUserLocation(User user)
 			throws InterruptedException, ExecutionException {
-//		CompletableFuture<VisitedLocation> cpl = 
-//				CompletableFuture.supplyAsync(() -> gpsUtil.getUserLocation(user.getUserId()), executor);
-//		cpl.thenAcceptAsync(v -> user.addToVisitedLocations(v), executor);
-//		.thenAcceptAsync(v -> user.addToVisitedLocations(v), executor);
-//		rewardsService.calculateRewards(user);
-//		return cpl;
 
 		CompletableFuture<VisitedLocation> future = CompletableFuture.supplyAsync(() -> {
 			VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());

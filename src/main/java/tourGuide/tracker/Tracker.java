@@ -16,16 +16,13 @@ import tourGuide.user.User;
 public class Tracker extends Thread {
 	private Logger logger = LoggerFactory.getLogger(Tracker.class);
 	private static final long trackingPollingInterval = TimeUnit.MINUTES.toSeconds(5);
-//	private final GpsUtil gpsUtil;
 
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	private final TourGuideService tourGuideService;
-//	private final RewardsService rewardsService;
 	private boolean stop = false;
 
 	public Tracker(TourGuideService tourGuideService) {
-//		this.gpsUtil = new GpsUtil();
 		this.tourGuideService = tourGuideService;
 
 		executorService.submit(this);

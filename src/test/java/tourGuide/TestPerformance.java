@@ -71,7 +71,7 @@ public class TestPerformance {
 			tourGuideService.trackUserLocation(user);
 		}
 
-		// Waiting for all users to receive their location
+		// Waiting for the location of the users
 		while (allUsers.stream().filter(u -> u.getVisitedLocations().size() < 4).count() > 0) {
 			TimeUnit.SECONDS.sleep(1);
 		}
@@ -104,7 +104,7 @@ public class TestPerformance {
 
 		allUsers.forEach(u -> rewardsService.calculateRewards(u));
 
-		// Waiting for all users to calculate their rewards
+		// Waiting for rewards calculation for all users
 		while (allUsers.stream().filter(u -> u.getUserRewards().size() == 0).count() > 0) {
 			TimeUnit.SECONDS.sleep(1);
 		}
